@@ -305,19 +305,19 @@ class SolidusMRZ {
 			
 	}
 	
-	private function returnCountryName($str) {
+    private function returnCountryName($str) {
         return ( array_key_exists($str, $this->countries) ) ? $this->countries[$str] : "Unknown Country";
     }
     
     #   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   #
-	#   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   #
+    #   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   #
     
     private function returnCheckDigitValues($str) {
         return $this->checkDigitValues[$str];
     }
     
- 	#   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   #
-	#   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   #
+    #   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   #
+    #   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   #
 
 	private function stripPadding($str) {
 
@@ -413,7 +413,9 @@ class SolidusMRZ {
 			return $region;
 		
 		} catch (Exception  $err) {
+			
 			return('Invalid region');
+			
 		}
 	
 	}
