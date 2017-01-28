@@ -7,7 +7,7 @@ Read an input and return parsed data in an array which can be manipulated furthe
 
 To simple usage, include mrz.php in your project file.
 
-$MRZ = new SolidusMRZ;
-$mrzocr = 'PTUNKKONI<<MARTINA<<<<<<<<<<<<<<<<<<<<<<<<<<K0503499<8UNK9701241F06022201170650553<<<<10';
-$data = $MRZ->parseMRZ($mrzocr);
-print_r($data);
+# $MRZ = new SolidusMRZ;
+# $mrzocr = 'PTUNKKONI<<MARTINA<<<<<<<<<<<<<<<<<<<<<<<<<<K0503499<8UNK9701241F06022201170650553<<<<10';
+# $data = $MRZ->parseMRZ($mrzocr);
+# print_r($data);
