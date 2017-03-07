@@ -359,7 +359,7 @@ class SolidusMRZ {
 		
 		$d = date('YY') + 11; // Documents are valid for 10 years and 9 months max after being issued.
 		$centennial = substr($d, 2, 2);
-		echo substr($str, 0, 2);
+		
 		$year = ($t == 1) ? 
 					( (substr($str, 0, 2) > $centennial) ? '19' . substr($str, 0, 2) : '20' . substr($str, 0, 2) )
 					:
