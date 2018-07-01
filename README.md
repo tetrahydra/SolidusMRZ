@@ -5,7 +5,7 @@ Original development was for my website www.PaperToTravel.com but I am sure it w
 
 Read an input and return parsed data in an array which can be manipulated further either for usage within PHP environment or output as JSON.
 
-For simple usage, include mrz.php in your project file.
+For simple usage, include mrz.php into your project file.
 
 ```php
 $MRZ = new SolidusMRZ;
