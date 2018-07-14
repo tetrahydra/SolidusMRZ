@@ -374,8 +374,10 @@ class SolidusMRZ {
 		
 		} else {
 
-			return trim(preg_replace('/</', ' ', $str));
-		
+                        $return = trim(preg_replace('/</', ' ', $str));
+                        $return = preg_replace('/\s+/', ' ', $return); // strip double whitespaces
+                        return $return;
+
 		}
 	
 	}
@@ -744,6 +746,9 @@ class SolidusMRZ {
 			
 			$lastNameRaw        = substr($mrz, 5, 25); 
 			$lastName           = $this->stripPadding( $lastNameRaw );
+
+			$documentNumberRaw  = substr($mrz, 36, 12);
+            		$documentNumber     = $this->stripPadding( $documentNumberRaw );
 			
 			$IDcardNumberRaw    = substr($mrz, 30, 3); 
 			$IDcardNumber       = $this->stripPadding( $IDcardNumberRaw );
@@ -786,8 +791,10 @@ class SolidusMRZ {
 			$id['IDcardNumber']     = $IDcardNumber;
 			$id['issuanceOffice1']  = $issuanceOffice1;
 			$id['issuanceOffice2']  = $issuanceOffice2;
+			$id['documentNumber']   = $documentNumber;
 			$id['issueYear']        = $issueYear;
 			$id['issueMonth']       = $issueMonth;
+			$id['expiry']		= '01/' . $issueMonth . '/20' . ($issueYear + 10); //calulating expiry date - valid for 10 years
 			$id['assignment1']      = $assignment1;
 			$id['dob']              = $dob;
 			$id['sex']              = $sex;
@@ -916,8 +923,10 @@ class SolidusMRZ {
 			
 			case 'I' : case 'A' : case 'C' : 
 
-						if ( array_key_exists(substr(substr($mrz, 0, 5), 2, 3), $this->EU_Countries) )
-							return $this->parseMRZID_EU($mrz); break;
+						if ( array_key_exists(substr(substr($mrz, 0, 5), 2, 3), $this->EU_Countries) ) {
+							return $this->parseMRZID_EU($mrz); 
+							break;
+						}
 							
 					  	return $this->parseMRZID1($mrz); break;
 			
