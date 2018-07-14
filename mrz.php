@@ -359,8 +359,10 @@ class SolidusMRZ {
 			return $str;
 		
 		} else {
-
-			return trim(preg_replace('/</', ' ', $str));
+			
+			$return = trim(preg_replace('/</', ' ', $str));
+			$return = preg_replace('/\s+/', ' ', $return); // strip double whitespaces
+			return $return;
 		
 		}
 	
@@ -614,62 +616,130 @@ class SolidusMRZ {
 	
 			$issuerOrg          = $this->getCountry( $this->stripPadding( substr($mrz, 2, 3) ) );
 			
-			$documentNumberRaw  = substr($mrz, 5, 9); 
-			$documentNumber     = $this->stripPadding( $documentNumberRaw );
-			$checkDigit1        = substr($mrz, 14, 1);
-			$checkDigitVerify1  = $this->checkDigitVerify( $documentNumberRaw, $checkDigit1 );
+			if ($issuerOrg['abbr'] == 'FRA') {
+
+				$documentNumberRaw  = substr($mrz, 36, 12); 
+				$documentNumber     = $this->stripPadding( $documentNumberRaw );
+				$checkDigit1        = substr($mrz, 48, 1);
+				$checkDigitVerify1  = $this->checkDigitVerify( $documentNumberRaw, $checkDigit1 );
+				
+				$optionalData       = $this->stripPadding( substr($mrz, 30, 6) );
+				
+				$dobRaw             = substr($mrz, 63, 6);
+				$dob                = $this->getFullDate( $this->stripPadding( $dobRaw), 1 );
+				$checkDigit2        = substr($mrz, 69, 1);
+				$checkDigitVerify2  = $this->checkDigitVerify( $dobRaw, $checkDigit2 );
+				
+				$sex                = $this->getSex( $this->stripPadding( substr($mrz, 70, 1) ) );
+				
+				/*
+				// data do not exist
+				
+				$expiryRaw          = substr($mrz, 38, 6);
+				$expiry             = $this->getFullDate( $this->stripPadding( $expiryRaw ), 2 );
+				*/
 			
-			$optionalData       = $this->stripPadding( substr($mrz, 15, 15) );
-			
-			$dobRaw             = substr($mrz, 30, 6);
-			$dob                = $this->getFullDate( $this->stripPadding( $dobRaw), 1 );
-			$checkDigit2        = substr($mrz, 36, 1);
-			$checkDigitVerify2  = $this->checkDigitVerify( $dobRaw, $checkDigit2 );
-			
-			$sex                = $this->getSex( $this->stripPadding( substr($mrz, 37, 1) ) );
-			
-			$expiryRaw          = substr($mrz, 38, 6);
-			$expiry             = $this->getFullDate( $this->stripPadding( $expiryRaw ), 2 );
+				$checkDigit3        = $this->stripPadding( substr($mrz, 71, 1) );
+				//$checkDigitVerify3  = $this->checkDigitVerify( $expiryRaw, $checkDigit3 );
+				$checkDigitVerify3  = 1; //data missing, set to 1
+				
+				$nationality        = $this->getCountry( $this->stripPadding( substr($mrz, 2, 3) ) );
+				
+				//$optionalData2      = $this->stripPadding( substr($mrz, 48, 11) );
+				
+				$finalCheckDigitRaw = $documentNumberRaw . $checkDigit1 . $dobRaw . $checkDigit2 . $expiryRaw . $checkDigit3 . $optionalData2;
+				$checkDigit4        = substr($mrz, 59, 1);
+				//$checkDigitVerify4  = $this->checkDigitVerify( $finalCheckDigitRaw, $checkDigit4); //TODO
 		
-			$checkDigit3        = $this->stripPadding( substr($mrz, 44, 1) );
-			$checkDigitVerify3  = $this->checkDigitVerify( $expiryRaw, $checkDigit3 );
+				$id['documentCode']     = substr($mrz, 0, 1);
+				$id['documentType']     = ($documentCode1 == 'I') ? 'ID-1' : 'UNKNOWN';
+				$id['documentType']    .= ($documentCode2 == 'R') ? ' Residence Card' : '';
+				$id['issuerOrg']        = $issuerOrg;
+				$id['names']['lastName']  = $this->stripPadding( substr($mrz, 5, 25) );
+				$id['names']['firstName']  = $this->stripPadding( substr($mrz, 49, 14) );
+				$id['documentNumber']   = $documentNumber;
+				$id['optionalData']     = $optionalData;
+				//$id['optionalData2']    = $optionalData2;
+				$id['nationality']      = $nationality;
+				$id['dob']              = $dob;
+				$id['sex']              = $sex;
+				//$id['expiry']           = $expiry; // data do not exist
 			
-			$nationality        = $this->getCountry( $this->stripPadding( substr($mrz, 45, 3) ) );
+				$id['checkDigit']['documentNumber']['checkDigit1']       = $checkDigit1;
+				$id['checkDigit']['documentNumber']['checkDigitVerify1'] = $checkDigitVerify1;
 			
-			$optionalData2      = $this->stripPadding( substr($mrz, 48, 11) );
+				$id['checkDigit']['dob']['checkDigit2']       = $checkDigit2;
+				$id['checkDigit']['dob']['checkDigitVerify2'] = $checkDigitVerify2;
 			
-			$finalCheckDigitRaw = $documentNumberRaw . $checkDigit1 . $dobRaw . $checkDigit2 . $expiryRaw . $checkDigit3 . $optionalData2;
-			$checkDigit4        = substr($mrz, 59, 1);
-			$checkDigitVerify4  = $this->checkDigitVerify( $finalCheckDigitRaw, $checkDigit4);
+				$id['checkDigit']['expiry']['checkDigit3']       = $checkDigit3;
+				$id['checkDigit']['expiry']['checkDigitVerify3'] = $checkDigitVerify3;
 			
-			$names              = $this->getNames( substr($mrz, 60, 30) );
-	
-			$id['documentCode']     = substr($mrz, 0, 1);
-			$id['documentType']     = ($documentCode1 == 'I') ? 'ID-1' : 'UNKNOWN';
-			$id['documentType']    .= ($documentCode2 == 'R') ? ' Residence Card' : '';
-			$id['issuerOrg']        = $issuerOrg;
-			$id['names']            = $names;
-			$id['documentNumber']   = $documentNumber;
-			$id['optionalData']     = $optionalData;
-			$id['optionalData2']    = $optionalData2;
-			$id['nationality']      = $nationality;
-			$id['dob']              = $dob;
-			$id['sex']              = $sex;
-			$id['expiry']           = $expiry;
+				$id['checkDigit']['finalCheck']['checkDigit4']       = $checkDigit4;
+				$id['checkDigit']['finalCheck']['checkDigitVerify4'] = $checkDigitVerify4;
+			
+				$id['mrzisvalid'] = $checkDigitVerify1 && $checkDigitVerify2 && $checkDigitVerify3 && $checkDigitVerify4;
+
+			}
+			else {
+
+				$documentNumberRaw  = substr($mrz, 5, 9); 
+				$documentNumber     = $this->stripPadding( $documentNumberRaw );
+				$checkDigit1        = substr($mrz, 14, 1);
+				$checkDigitVerify1  = $this->checkDigitVerify( $documentNumberRaw, $checkDigit1 );
+				
+				$optionalData       = $this->stripPadding( substr($mrz, 15, 15) );
+				
+				$dobRaw             = substr($mrz, 30, 6);
+				$dob                = $this->getFullDate( $this->stripPadding( $dobRaw), 1 );
+				$checkDigit2        = substr($mrz, 36, 1);
+				$checkDigitVerify2  = $this->checkDigitVerify( $dobRaw, $checkDigit2 );
+				
+				$sex                = $this->getSex( $this->stripPadding( substr($mrz, 37, 1) ) );
+				
+				$expiryRaw          = substr($mrz, 38, 6);
+				$expiry             = $this->getFullDate( $this->stripPadding( $expiryRaw ), 2 );
+			
+				$checkDigit3        = $this->stripPadding( substr($mrz, 44, 1) );
+				$checkDigitVerify3  = $this->checkDigitVerify( $expiryRaw, $checkDigit3 );
+				
+				$nationality        = $this->getCountry( $this->stripPadding( substr($mrz, 45, 3) ) );
+				
+				$optionalData2      = $this->stripPadding( substr($mrz, 48, 11) );
+				
+				$finalCheckDigitRaw = $documentNumberRaw . $checkDigit1 . $dobRaw . $checkDigit2 . $expiryRaw . $checkDigit3 . $optionalData2;
+				$checkDigit4        = substr($mrz, 59, 1);
+				$checkDigitVerify4  = $this->checkDigitVerify( $finalCheckDigitRaw, $checkDigit4);
+				
+				$names              = $this->getNames( substr($mrz, 60, 30) );
 		
-			$id['checkDigit']['documentNumber']['checkDigit1']       = $checkDigit1;
-			$id['checkDigit']['documentNumber']['checkDigitVerify1'] = $checkDigitVerify1;
-		
-			$id['checkDigit']['dob']['checkDigit2']       = $checkDigit2;
-			$id['checkDigit']['dob']['checkDigitVerify2'] = $checkDigitVerify2;
-		
-			$id['checkDigit']['expiry']['checkDigit3']       = $checkDigit3;
-			$id['checkDigit']['expiry']['checkDigitVerify3'] = $checkDigitVerify3;
-		
-			$id['checkDigit']['finalCheck']['checkDigit4']       = $checkDigit4;
-			$id['checkDigit']['finalCheck']['checkDigitVerify4'] = $checkDigitVerify4;
-		
-			$id['mrzisvalid'] = $checkDigitVerify1 && $checkDigitVerify2 && $checkDigitVerify3 && $checkDigitVerify4;
+				$id['documentCode']     = substr($mrz, 0, 1);
+				$id['documentType']     = ($documentCode1 == 'I') ? 'ID-1' : 'UNKNOWN';
+				$id['documentType']    .= ($documentCode2 == 'R') ? ' Residence Card' : '';
+				$id['issuerOrg']        = $issuerOrg;
+				$id['names']            = $names;
+				$id['documentNumber']   = $documentNumber;
+				$id['optionalData']     = $optionalData;
+				$id['optionalData2']    = $optionalData2;
+				$id['nationality']      = $nationality;
+				$id['dob']              = $dob;
+				$id['sex']              = $sex;
+				$id['expiry']           = $expiry;
+			
+				$id['checkDigit']['documentNumber']['checkDigit1']       = $checkDigit1;
+				$id['checkDigit']['documentNumber']['checkDigitVerify1'] = $checkDigitVerify1;
+			
+				$id['checkDigit']['dob']['checkDigit2']       = $checkDigit2;
+				$id['checkDigit']['dob']['checkDigitVerify2'] = $checkDigitVerify2;
+			
+				$id['checkDigit']['expiry']['checkDigit3']       = $checkDigit3;
+				$id['checkDigit']['expiry']['checkDigitVerify3'] = $checkDigitVerify3;
+			
+				$id['checkDigit']['finalCheck']['checkDigit4']       = $checkDigit4;
+				$id['checkDigit']['finalCheck']['checkDigitVerify4'] = $checkDigitVerify4;
+			
+				$id['mrzisvalid'] = $checkDigitVerify1 && $checkDigitVerify2 && $checkDigitVerify3 && $checkDigitVerify4;
+
+			}
 		
 			return $id;
 		}
