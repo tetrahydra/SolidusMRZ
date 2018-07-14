@@ -11,7 +11,7 @@
 # =            | halim@ebyx.net
 # =            |
 # =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =
-# = Revision   | 
+# = Revision   | 2018-07-14 Added $EU_Countries and function for parseMRZID_EU()
 # =            | 
 # =            | 
 # =            | 
@@ -22,6 +22,7 @@
 class SolidusMRZ {
 
 	private $countries;
+	private $EU_Countries;
 	private $EU_additional_org;
 	private $checkDigitValues;
 
@@ -105,13 +106,13 @@ class SolidusMRZ {
 				"FRO" => "Faeroe Islands",
 				"FJI" => "Fiji",
 				"FIN" => "Finland",
-				"FRA" => "France",
 				"FXX" => "France, Metropolitan",
 				"GUF" => "French Guiana",
 				"PYF" => "French Polynesia",
 				"GAB" => "Gabon",
 				"GMB" => "Gambia",
 				"GEO" => "Georgia",
+				"D"   => "Germany",
 				"GHA" => "Ghana",
 				"GIB" => "Gibraltar",
 				"GRC" => "Greece",
@@ -251,6 +252,12 @@ class SolidusMRZ {
 				"UGA" => "Uganda",
 				"UKR" => "Ukraine",
 				"ARE" => "United Arab Emirates",
+				"GBR" => "United Kingdom of Great Britain and Northern Ireland Citizen",
+				"GBD" => "United Kingdom of Great Britain and Northern Ireland Dependent Territories Citizen",
+				"GBN" => "United Kingdom of Great Britain and Northern Ireland National (oversees)",
+				"GBO" => "United Kingdom of Great Britain and Northern Ireland Oversees Citizen",
+				"GBP" => "United Kingdom of Great Britain and Northern Ireland Protected Person",
+				"GBS" => "United Kingdom of Great Britain and Northern Ireland Subject",
 				"TZA" => "United Republic of Tanzania",
 				"USA" => "United States of America",
 				"UMI" => "United States of America Minor Outlying Islands",
@@ -266,63 +273,28 @@ class SolidusMRZ {
 				"YEM" => "Yemen",
 				"ZAR" => "Zaire",
 				"ZMB" => "Zambia",
-				"ZWE" => "Zimbabwe"
-			);
-	    
-	    	$this->non_ISO_3166 = 
-			array(
-				"XBA" => "African Development Bank",
-				"XIM" => "African Export–Import Bank",
-				"XCC" => "Caribbean Community",
-					 /* Caribbean Community or one of its emissaries */
-				"XCO" => "Common Market for Eastern and Southern Africa",
-				"XEC" => "Economic Community of West African States",
-				"EUE" => "European Union",
-				"D"   => "Germany",
-				"XPO" => "International Criminal Police Organization (Interpol)",
-				"IMO" => "International Maritime Organisation",
-				"RKS" => "Kosovo",
-				"XOM" => "Sovereign Military Order of Malta",
-				"WSA" => "World Service Authority World Passport"
-			);
-	    
-	    	$this->united_nations = 
-			array(
-				"UNK" => "United Nations Interim Administration Mission in Kosovo (UNMIK)",
-					 /* Travel document issued by the United Nations Interim Administration Mission in Kosovo (UNMIK) for Resident of Kosovo */
+				"ZWE" => "Zimbabwe",
 				"UNO" => "United Nations Organization Official",
 				"UNA" => "United Nations Organization Specialized Agency Official",
 				"XAA" => "Stateless (per Article 1 of 1954 convention)",
-					 /* Stateless person, as per the 1954 Convention Relating to the Status of Stateless Persons */
 				"XXB" => "Refugee (per Article 1 of 1951 convention, amended by 1967 protocol)",
-					 /* Refugee, as per the 1951 Convention Relating to the Status of Refugees */
 				"XXC" => "Refugee (non-convention)",
-				"XXX" => "Unspecified Nationality / Unknown",
+				"XXX" => "Unspecified / Unknown",
 				"UTO" => "Utopian"
 			);
-	    
-	    	$this->british_nationals = 
+		
+		$this->EU_Countries = 
 			array(
-				"GBR" => "United Kingdom of Great Britain and Northern Ireland Citizen",
-					 /* British National (Proper) */
-				"GBD" => "United Kingdom of Great Britain and Northern Ireland Dependent Territories Citizen",
-					 /* British Overseas Territories Citizen (BOTC) */
-				"GBN" => "United Kingdom of Great Britain and Northern Ireland National (Overseas)",
-					 /* British National (Overseas) */
-				"GBO" => "United Kingdom of Great Britain and Northern Ireland Oversees Citizen",
-					 /* British Overseas Citizen */
-				"GBP" => "United Kingdom of Great Britain and Northern Ireland Protected Person",
-					 /* British Protected Person */
-				"GBS" => "United Kingdom of Great Britain and Northern Ireland Subject",
-					 /* British Subject */
+				"FRA" => "France",
 			);
 		
-		$this->countries = array_merge(
-					$this->countries, 
-					$this->non_ISO_3166, 
-					$this->united_nations,
-					$this->british_nationals
-				   );
+		$this->EU_additional_org = 
+			array(
+				'XPO' => 'Interpol',
+				'IMO' => 'International Maritime Organisation',
+			);
+		
+		$this->countries = array_merge($this->countries, $this->EU_Countries, $this->EU_additional_org);
 		
     	// # Check Digit Weight
 		$this->checkDigitValues = 
@@ -338,19 +310,19 @@ class SolidusMRZ {
 			
 	}
 	
-    private function returnCountryName($str) {
+	private function returnCountryName($str) {
         return ( array_key_exists($str, $this->countries) ) ? $this->countries[$str] : "Unknown Country";
     }
     
     #   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   #
-    #   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   #
+	#   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   #
     
     private function returnCheckDigitValues($str) {
         return $this->checkDigitValues[$str];
     }
     
-    #   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   #
-    #   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   #
+ 	#   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   #
+	#   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   #
 
 	private function stripPadding($str) {
 
@@ -446,9 +418,7 @@ class SolidusMRZ {
 			return $region;
 		
 		} catch (Exception  $err) {
-			
 			return('Invalid region');
-			
 		}
 	
 	}
@@ -512,6 +482,8 @@ class SolidusMRZ {
 	 *   73 - 86: Personal number
 	 *   87 - 87: Check digit
 	 *   88 - 88: Check digit
+	 *
+	 * @author Craig Newton <newtondev@gmail.com>
 	 */
 	 
 	private function parseMRZPassport($mrz) {
@@ -599,9 +571,22 @@ class SolidusMRZ {
 	/**
 	 * Parser of ID-1 MRZ strings. The machine readable zone on a identity card has
 	 * 3 lines, each consisting of 30 characters. Below a reference to the format:
-	 *   01 - 01: Document code
-	 *   02 - 02: Document type
-	 *   03 - 05: Issuing state or organisation
+	 * Parser of "travel document type 1" (td1) documents. Below a reference to the format:
+	 *
+	 *   01 - 02: Document code
+	 *   03 - 05: Issuing state or organization
+	 *   06 - 14: Document number
+	 *   15 - 15: Check digit
+	 *   16 - 30: Optional data (personal number); 30 normally being check digit
+	 *   31 - 36: Date of birth
+	 *   37 - 37: Check digit of 31-36
+	 *   38 - 38: Sex
+	 *   39 - 44: Date of expiry
+	 *   45 - 45: Check digit
+	 *   46 - 48: Nationality
+	 *   49 - 59: Optional data
+	 *   60 - 60: Check digit over 01 - 59
+	 *   61 - 90: Name
 	 *
 	 */
 	 
@@ -609,8 +594,8 @@ class SolidusMRZ {
 	
 		try {
 		
-			$documentCode1     = substr($mrz, 0, 1);
-			$documentCode2     = substr($mrz, 1, 1);
+			$documentCode1      = substr($mrz, 0, 1);
+			$documentCode2      = substr($mrz, 1, 1);
 	
 			$issuerOrg          = $this->getCountry( $this->stripPadding( substr($mrz, 2, 3) ) );
 			
@@ -637,7 +622,7 @@ class SolidusMRZ {
 			$nationality        = $this->getCountry( $this->stripPadding( substr($mrz, 45, 3) ) );
 			
 			$optionalData2      = $this->stripPadding( substr($mrz, 48, 11) );
-			
+		
 			$finalCheckDigitRaw = $documentNumberRaw . $checkDigit1 . $dobRaw . $checkDigit2 . $expiryRaw . $checkDigit3 . $optionalData2;
 			$checkDigit4        = substr($mrz, 59, 1);
 			$checkDigitVerify4  = $this->checkDigitVerify( $finalCheckDigitRaw, $checkDigit4);
@@ -645,7 +630,7 @@ class SolidusMRZ {
 			$names              = $this->getNames( substr($mrz, 60, 30) );
 	
 			$id['documentCode']     = substr($mrz, 0, 1);
-			$id['documentType']     = ($documentCode1 == 'I') ? 'ID-1' : 'UNKNOWN';
+			$id['documentType']     = 'Travel Document TD-1';
 			$id['documentType']    .= ($documentCode2 == 'R') ? ' Residence Card' : '';
 			$id['issuerOrg']        = $issuerOrg;
 			$id['names']            = $names;
@@ -680,6 +665,112 @@ class SolidusMRZ {
 		}
 		
 	}
+	
+	#   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   #
+	#   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   #
+	
+	/**
+	 * Parser of ID-1 MRZ strings. The machine readable zone on a identity card has
+	 * 3 lines, each consisting of 30 characters. Below a reference to the format:
+	 * Parser of "travel document type 1" (td1) documents. Below a reference to the format:
+	 *
+	 *   01 - 02: Document code
+	 *   03 - 05: Issuing state or organization
+	 *   06 - 14: Document number
+	 *   15 - 15: Check digit
+	 *   16 - 30: Optional data (personal number); 30 normally being check digit
+	 *   31 - 36: Date of birth
+	 *   37 - 37: Check digit of 31-36
+	 *   38 - 38: Sex
+	 *   39 - 44: Date of expiry
+	 *   45 - 45: Check digit
+	 *   46 - 48: Nationality
+	 *   49 - 59: Optional data
+	 *   60 - 60: Check digit over 01 - 59
+	 *   61 - 90: Name
+	 *
+	 */
+	 
+	private function parseMRZID_EU($mrz) {
+	
+		try {
+		
+			$documentCode1      = substr($mrz, 0, 1);
+			$documentCode2      = substr($mrz, 1, 1);
+	
+			$issuerOrg          = $this->getCountry( $this->stripPadding( substr($mrz, 2, 3) ) );
+			
+			$lastNameRaw        = substr($mrz, 5, 25); 
+			$lastName           = $this->stripPadding( $lastNameRaw );
+			
+			$IDcardNumberRaw    = substr($mrz, 30, 3); 
+			$IDcardNumber       = $this->stripPadding( $IDcardNumberRaw );
+			$issuanceOffice1Raw = substr($mrz, 33, 3); 
+			$issuanceOffice1    = $this->stripPadding( $issuanceOffice1Raw );
+		
+			$issueYearRaw       = substr($mrz, 36, 2); 
+			$issueYear          = $this->stripPadding( $issueYearRaw );
+			$issueMonthRaw      = substr($mrz, 38, 2); 
+			$issueMonth         = $this->stripPadding( $issueMonthRaw );
+			
+			$issuanceOffice2Raw = substr($mrz, 40, 3); 
+			$issuanceOffice2    = $this->stripPadding( $issuanceOffice2Raw );
+			
+			$assignment1Raw     = substr($mrz, 43, 5); 
+			$assignment1        = $this->stripPadding( $assignment1Raw );
+			
+			$checkDigit1        = substr($mrz, 48, 1);
+			$checkDigitVerify1  = $this->checkDigitVerify( substr($mrz, 36, 12), $checkDigit1 );
+			
+			$firstNameRaw       = substr($mrz, 49, 14); 
+			$firstName          = $this->stripPadding( $firstNameRaw );
+			
+			$dobRaw             = substr($mrz, 63, 6);
+			$dob                = $this->getFullDate( $this->stripPadding( $dobRaw), 1 );
+			$checkDigit2        = substr($mrz, 69, 1);
+			$checkDigitVerify2  = $this->checkDigitVerify( $dobRaw, $checkDigit2 );
+			
+			$sex                = $this->getSex( $this->stripPadding( substr($mrz, 70, 1) ) );
+		
+			$checkDigit3        = $this->stripPadding( substr($mrz, 71, 1) );
+			$checkDigitVerify3  = $this->checkDigitVerify( substr($mrz, 0, 71), $checkDigit3 );
+	
+			$id['documentCode']     = substr($mrz, 0, 1);
+			$id['documentType']     = 'Travel Document TD-1';
+			$id['documentType']    .= ($documentCode2 == 'D') ? ' Identity Card' : '';
+			$id['issuerOrg']        = $issuerOrg;
+			$id['lastName']         = $lastName;
+			$id['firstName']        = $firstName;
+			$id['IDcardNumber']     = $IDcardNumber;
+			$id['issuanceOffice1']  = $issuanceOffice1;
+			$id['issuanceOffice2']  = $issuanceOffice2;
+			$id['issueYear']        = $issueYear;
+			$id['issueMonth']       = $issueMonth;
+			$id['assignment1']      = $assignment1;
+			$id['dob']              = $dob;
+			$id['sex']              = $sex;
+		
+			$id['checkDigit']['documentNumber']['checkDigit1']       = $checkDigit1;
+			$id['checkDigit']['documentNumber']['checkDigitVerify1'] = $checkDigitVerify1;
+		
+			$id['checkDigit']['dob']['checkDigit2']       = $checkDigit2;
+			$id['checkDigit']['dob']['checkDigitVerify2'] = $checkDigitVerify2;
+		
+			$id['checkDigit']['finalCheck']['checkDigit4']       = $checkDigit3;
+			$id['checkDigit']['finalCheck']['checkDigitVerify4'] = $checkDigitVerify3;
+		
+			$id['mrzisvalid'] = $checkDigitVerify1 && $checkDigitVerify2 && $checkDigitVerify3;
+		
+			return $id;
+		}
+		
+		catch (Exception $e) {
+			$error['error'] = 'Details parsing failed. ' . $e;
+			return $error;
+		}
+		
+	}
+	
 	
 	#   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   #
 	#   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   #
@@ -781,7 +872,12 @@ class SolidusMRZ {
 		
 			case 'P' : return $this->parseMRZPassport($mrz); break;
 			
-			case 'I' : return $this->parseMRZID1($mrz); break;
+			case 'I' : case 'A' : case 'C' : 
+
+						if ( array_key_exists(substr(substr($mrz, 0, 5), 2, 3), $this->EU_Countries) )
+							return $this->parseMRZID_EU($mrz); break;
+							
+					  	return $this->parseMRZID1($mrz); break;
 			
 			case 'V' : return $this->parseMRZVisa($mrz); break;
 			
