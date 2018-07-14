@@ -7,7 +7,7 @@
 # =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =
 # = Version    | 1.0
 # =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =
-# = Notes      | Halim Rahman Minai
+# = Notes      | Halim Minai Rahman 
 # =            | halim@ebyx.net
 # =            |
 # =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =
@@ -252,12 +252,6 @@ class SolidusMRZ {
 				"UGA" => "Uganda",
 				"UKR" => "Ukraine",
 				"ARE" => "United Arab Emirates",
-				"GBR" => "United Kingdom of Great Britain and Northern Ireland Citizen",
-				"GBD" => "United Kingdom of Great Britain and Northern Ireland Dependent Territories Citizen",
-				"GBN" => "United Kingdom of Great Britain and Northern Ireland National (oversees)",
-				"GBO" => "United Kingdom of Great Britain and Northern Ireland Oversees Citizen",
-				"GBP" => "United Kingdom of Great Britain and Northern Ireland Protected Person",
-				"GBS" => "United Kingdom of Great Britain and Northern Ireland Subject",
 				"TZA" => "United Republic of Tanzania",
 				"USA" => "United States of America",
 				"UMI" => "United States of America Minor Outlying Islands",
@@ -273,15 +267,56 @@ class SolidusMRZ {
 				"YEM" => "Yemen",
 				"ZAR" => "Zaire",
 				"ZMB" => "Zambia",
-				"ZWE" => "Zimbabwe",
-				"UNO" => "United Nations Organization Official",
-				"UNA" => "United Nations Organization Specialized Agency Official",
-				"XAA" => "Stateless (per Article 1 of 1954 convention)",
-				"XXB" => "Refugee (per Article 1 of 1951 convention, amended by 1967 protocol)",
-				"XXC" => "Refugee (non-convention)",
-				"XXX" => "Unspecified / Unknown",
-				"UTO" => "Utopian"
+				"ZWE" => "Zimbabwe"
 			);
+		
+		$this->non_ISO_3166 = 	
+			array(	
+				"XBA" => "African Development Bank",	
+				"XIM" => "African Export–Import Bank",	
+				"XCC" => "Caribbean Community",	
+					 /* Caribbean Community or one of its emissaries */	
+				"XCO" => "Common Market for Eastern and Southern Africa",	
+				"XEC" => "Economic Community of West African States",	
+				"EUE" => "European Union",	
+				"D"   => "Germany",	
+				"XPO" => "International Criminal Police Organization (Interpol)",	
+				"IMO" => "International Maritime Organisation",	
+				"RKS" => "Kosovo",	
+				"XOM" => "Sovereign Military Order of Malta",	
+				"WSA" => "World Service Authority World Passport"	
+			);
+		
+		$this->united_nations = 	
+			array(	
+				"UNK" => "United Nations Interim Administration Mission in Kosovo (UNMIK)",	
+				/* Travel document issued by the United Nations Interim Administration Mission in Kosovo (UNMIK) for Resident of Kosovo */	
+ 				"UNO" => "United Nations Organization Official",
+ 				"UNA" => "United Nations Organization Specialized Agency Official",	 				"UNA" => "United Nations Organization Specialized Agency Official",
+ 				"XAA" => "Stateless (per Article 1 of 1954 convention)",
+				/* Stateless person, as per the 1954 Convention Relating to the Status of Stateless Persons */		 			
+ 				"XXB" => "Refugee (per Article 1 of 1951 convention, amended by 1967 protocol)",
+				/* Refugee, as per the 1951 Convention Relating to the Status of Refugees */	
+ 				"XXC" => "Refugee (non-convention)",
+				"XXX" => "Unspecified Nationality / Unknown",
+ 				"UTO" => "Utopian"
+ 			);
+ 		
+ 		$this->british_nationals =  
+ 			array(
+				"GBR" => "United Kingdom of Great Britain and Northern Ireland Citizen",
+				/* British National (Proper) */
+				"GBD" => "United Kingdom of Great Britain and Northern Ireland Dependent Territories Citizen",		
+				/* British Overseas Territories Citizen (BOTC) */
+				"GBN" => "United Kingdom of Great Britain and Northern Ireland National (Overseas)",		
+				/* British National (Overseas) */
+				"GBO" => "United Kingdom of Great Britain and Northern Ireland Oversees Citizen",					
+				/* British Overseas Citizen */	
+				"GBP" => "United Kingdom of Great Britain and Northern Ireland Protected Person",	
+				/* British Protected Person */	
+				"GBS" => "United Kingdom of Great Britain and Northern Ireland Subject",	
+				/* British Subject */	
+ 			);
 		
 		$this->EU_Countries = 
 			array(
@@ -294,7 +329,14 @@ class SolidusMRZ {
 				'IMO' => 'International Maritime Organisation',
 			);
 		
-		$this->countries = array_merge($this->countries, $this->EU_Countries, $this->EU_additional_org);
+		$this->countries = array_merge(
+			$this->countries, 
+			$this->non_ISO_3166,
+			$this->united_nations,
+			$this->british_nationals,
+			$this->EU_Countries, 
+			$this->EU_additional_org
+		);
 		
     	// # Check Digit Weight
 		$this->checkDigitValues = 
