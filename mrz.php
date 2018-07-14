@@ -714,25 +714,10 @@ class SolidusMRZ {
 	#   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   #
 	
 	/**
-	 * Parser of ID-1 MRZ strings. The machine readable zone on a identity card has
-	 * 3 lines, each consisting of 30 characters. Below a reference to the format:
-	 * Parser of "travel document type 1" (td1) documents. Below a reference to the format:
-	 *
-	 *   01 - 02: Document code
-	 *   03 - 05: Issuing state or organization
-	 *   06 - 14: Document number
-	 *   15 - 15: Check digit
-	 *   16 - 30: Optional data (personal number); 30 normally being check digit
-	 *   31 - 36: Date of birth
-	 *   37 - 37: Check digit of 31-36
-	 *   38 - 38: Sex
-	 *   39 - 44: Date of expiry
-	 *   45 - 45: Check digit
-	 *   46 - 48: Nationality
-	 *   49 - 59: Optional data
-	 *   60 - 60: Check digit over 01 - 59
-	 *   61 - 90: Name
-	 *
+	 * 
+	 * Reference : https://en.wikipedia.org/wiki/National_identity_card_(France)#Machine-readable_zone
+	 * Formatted to permit future addition if other EU countries also have similar MRZ format.
+	 * 
 	 */
 	 
 	private function parseMRZID_EU($mrz) {
@@ -794,7 +779,6 @@ class SolidusMRZ {
 			$id['documentNumber']   = $documentNumber;
 			$id['issueYear']        = $issueYear;
 			$id['issueMonth']       = $issueMonth;
-			$id['expiry']		= '01/' . $issueMonth . '/20' . ($issueYear + 10); //calulating expiry date - valid for 10 years
 			$id['assignment1']      = $assignment1;
 			$id['dob']              = $dob;
 			$id['sex']              = $sex;
