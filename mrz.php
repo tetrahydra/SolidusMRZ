@@ -771,8 +771,8 @@ class SolidusMRZ {
 			$id['documentType']     = 'Travel Document TD-1';
 			$id['documentType']    .= ($documentCode2 == 'D') ? ' Identity Card' : '';
 			$id['issuerOrg']        = $issuerOrg;
-			$id['lastName']         = $lastName;
-			$id['firstName']        = $firstName;
+			$id['names']['lastName']         = $lastName;
+			$id['names']['firstName']        = $firstName;
 			$id['IDcardNumber']     = $IDcardNumber;
 			$id['issuanceOffice1']  = $issuanceOffice1;
 			$id['issuanceOffice2']  = $issuanceOffice2;
