@@ -511,7 +511,13 @@ class SolidusMRZ {
     #   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   #
 
     /**
-     * Parser of Passport MRZ strings. The machine readable zone on a passport has
+     * Parser of Passport MRZ strings.
+     * 
+     * Size 3 Machine Readable Travel Documents (TD3)
+     * Specified in Part 4 of ICAO Doc 9303
+     * https://www.icao.int/publications/pages/publication.aspx?docnum=9303
+     * 
+     * The machine readable zone on a passport has
      * 2 lines, each consisting of 44 characters. Below a reference to the format:
      *   01 - 02: Document code
      *   03 - 05: Issuing state or organisation
@@ -612,11 +618,29 @@ class SolidusMRZ {
     #   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   #
 
     /**
-     * Parser of ID-1 MRZ strings. The machine readable zone on a identity card has
+     * Parser of ID-1 MRZ strings.
+     * 
+     * Size 1 Machine Readable Travel Documents (TD1)
+     * Specified in Part 5 of ICAO Doc 9303
+     * https://www.icao.int/publications/pages/publication.aspx?docnum=9303
+     * 
+     * The machine readable zone on a identity card has
      * 3 lines, each consisting of 30 characters. Below a reference to the format:
      *   01 - 01: Document code
      *   02 - 02: Document type
      *   03 - 05: Issuing state or organisation
+     *   06 - 14: Document number
+     *   15 - 15: Check digit
+     *   16 - 30: Optional data
+     *   31 - 36: Date of birth
+     *   37 - 37: Check digit
+     *   38 - 38: Sex
+     *   39 - 44: Date of expiry
+     *   45 - 45: Check digit
+     *   46 - 48: Nationality
+     *   49 - 59: Optional data 2
+     *   60 - 60: Composite check digit
+     *   61 - 90: Name
      *
      */
 
@@ -629,130 +653,62 @@ class SolidusMRZ {
 
             $issuerOrg          = $this->getCountry( $this->stripPadding( substr($mrz, 2, 3) ) );
 
-            if ($issuerOrg['abbr'] == 'FRA') {
+            $documentNumberRaw  = substr($mrz, 5, 9);
+            $documentNumber     = $this->stripPadding( $documentNumberRaw );
+            $checkDigit1        = substr($mrz, 14, 1);
+            $checkDigitVerify1  = $this->checkDigitVerify( $documentNumberRaw, $checkDigit1 );
 
-                $documentNumberRaw  = substr($mrz, 36, 12);
-                $documentNumber     = $this->stripPadding( $documentNumberRaw );
-                $checkDigit1        = substr($mrz, 48, 1);
-                $checkDigitVerify1  = $this->checkDigitVerify( $documentNumberRaw, $checkDigit1 );
+            $optionalData       = $this->stripPadding( substr($mrz, 15, 15) );
 
-                $optionalData       = $this->stripPadding( substr($mrz, 30, 6) );
+            $dobRaw             = substr($mrz, 30, 6);
+            $dob                = $this->getFullDate( $this->stripPadding( $dobRaw), 1 );
+            $checkDigit2        = substr($mrz, 36, 1);
+            $checkDigitVerify2  = $this->checkDigitVerify( $dobRaw, $checkDigit2 );
 
-                $dobRaw             = substr($mrz, 63, 6);
-                $dob                = $this->getFullDate( $this->stripPadding( $dobRaw), 1 );
-                $checkDigit2        = substr($mrz, 69, 1);
-                $checkDigitVerify2  = $this->checkDigitVerify( $dobRaw, $checkDigit2 );
+            $sex                = $this->getSex( $this->stripPadding( substr($mrz, 37, 1) ) );
 
-                $sex                = $this->getSex( $this->stripPadding( substr($mrz, 70, 1) ) );
+            $expiryRaw          = substr($mrz, 38, 6);
+            $expiry             = $this->getFullDate( $this->stripPadding( $expiryRaw ), 2 );
 
-                /*
-                // data do not exist
+            $checkDigit3        = $this->stripPadding( substr($mrz, 44, 1) );
+            $checkDigitVerify3  = $this->checkDigitVerify( $expiryRaw, $checkDigit3 );
 
-                $expiryRaw          = substr($mrz, 38, 6);
-                $expiry             = $this->getFullDate( $this->stripPadding( $expiryRaw ), 2 );
-                */
+            $nationality        = $this->getCountry( $this->stripPadding( substr($mrz, 45, 3) ) );
 
-                $checkDigit3        = null; //data missing
-                //$checkDigitVerify3  = $this->checkDigitVerify( $expiryRaw, $checkDigit3 );
-                $checkDigitVerify3  = 1; //data missing, set to 1
+            $optionalData2      = $this->stripPadding( substr($mrz, 48, 11) );
 
-                $nationality        = $this->getCountry( $this->stripPadding( substr($mrz, 2, 3) ) );
+            $finalCheckDigitRaw = $documentNumberRaw . $checkDigit1 . $dobRaw . $checkDigit2 . $expiryRaw . $checkDigit3 . $optionalData2;
+            $checkDigit4        = substr($mrz, 59, 1);
+            $checkDigitVerify4  = $this->checkDigitVerify( $finalCheckDigitRaw, $checkDigit4);
 
-                //$optionalData2      = $this->stripPadding( substr($mrz, 48, 11) );
+            $names              = $this->getNames( substr($mrz, 60, 30) );
 
-                $finalCheckDigitRaw = substr($mrz, 0, 71);
-                $checkDigit4        = $this->stripPadding( substr($mrz, 71, 1) );
-                $checkDigitVerify4  = $this->checkDigitVerify( $finalCheckDigitRaw, $checkDigit4);
+            $id['documentCode']     = substr($mrz, 0, 1);
+            $id['documentType']     = ($documentCode1 == 'I') ? 'ID-1' : 'UNKNOWN';
+            $id['documentType']    .= ($documentCode2 == 'R') ? ' Residence Card' : '';
+            $id['issuerOrg']        = $issuerOrg;
+            $id['names']            = $names;
+            $id['documentNumber']   = $documentNumber;
+            $id['optionalData']     = $optionalData;
+            $id['optionalData2']    = $optionalData2;
+            $id['nationality']      = $nationality;
+            $id['dob']              = $dob;
+            $id['sex']              = $sex;
+            $id['expiry']           = $expiry;
 
-                $id['documentCode']     = substr($mrz, 0, 1);
-                $id['documentType']     = ($documentCode1 == 'I') ? 'ID-1' : 'UNKNOWN';
-                $id['documentType']    .= ($documentCode2 == 'R') ? ' Residence Card' : '';
-                $id['issuerOrg']        = $issuerOrg;
-                $id['names']['lastName']  = $this->stripPadding( substr($mrz, 5, 25) );
-                $id['names']['firstName']  = $this->stripPadding( substr($mrz, 49, 14) );
-                $id['documentNumber']   = $documentNumber;
-                $id['optionalData']     = $optionalData;
-                //$id['optionalData2']    = $optionalData2;
-                $id['nationality']      = $nationality;
-                $id['dob']              = $dob;
-                $id['sex']              = $sex;
-                //$id['expiry']           = $expiry; // data do not exist
+            $id['checkDigit']['documentNumber']['checkDigit1']       = $checkDigit1;
+            $id['checkDigit']['documentNumber']['checkDigitVerify1'] = $checkDigitVerify1;
 
-                $id['checkDigit']['documentNumber']['checkDigit1']       = $checkDigit1;
-                $id['checkDigit']['documentNumber']['checkDigitVerify1'] = $checkDigitVerify1;
+            $id['checkDigit']['dob']['checkDigit2']       = $checkDigit2;
+            $id['checkDigit']['dob']['checkDigitVerify2'] = $checkDigitVerify2;
 
-                $id['checkDigit']['dob']['checkDigit2']       = $checkDigit2;
-                $id['checkDigit']['dob']['checkDigitVerify2'] = $checkDigitVerify2;
+            $id['checkDigit']['expiry']['checkDigit3']       = $checkDigit3;
+            $id['checkDigit']['expiry']['checkDigitVerify3'] = $checkDigitVerify3;
 
-                $id['checkDigit']['expiry']['checkDigit3']       = $checkDigit3;
-                $id['checkDigit']['expiry']['checkDigitVerify3'] = $checkDigitVerify3;
+            $id['checkDigit']['finalCheck']['checkDigit4']       = $checkDigit4;
+            $id['checkDigit']['finalCheck']['checkDigitVerify4'] = $checkDigitVerify4;
 
-                $id['checkDigit']['finalCheck']['checkDigit4']       = $checkDigit4;
-                $id['checkDigit']['finalCheck']['checkDigitVerify4'] = $checkDigitVerify4;
-
-                $id['mrzisvalid'] = $checkDigitVerify1 && $checkDigitVerify2 && $checkDigitVerify3 && $checkDigitVerify4;
-
-            }
-            else {
-
-                $documentNumberRaw  = substr($mrz, 5, 9);
-                $documentNumber     = $this->stripPadding( $documentNumberRaw );
-                $checkDigit1        = substr($mrz, 14, 1);
-                $checkDigitVerify1  = $this->checkDigitVerify( $documentNumberRaw, $checkDigit1 );
-
-                $optionalData       = $this->stripPadding( substr($mrz, 15, 15) );
-
-                $dobRaw             = substr($mrz, 30, 6);
-                $dob                = $this->getFullDate( $this->stripPadding( $dobRaw), 1 );
-                $checkDigit2        = substr($mrz, 36, 1);
-                $checkDigitVerify2  = $this->checkDigitVerify( $dobRaw, $checkDigit2 );
-
-                $sex                = $this->getSex( $this->stripPadding( substr($mrz, 37, 1) ) );
-
-                $expiryRaw          = substr($mrz, 38, 6);
-                $expiry             = $this->getFullDate( $this->stripPadding( $expiryRaw ), 2 );
-
-                $checkDigit3        = $this->stripPadding( substr($mrz, 44, 1) );
-                $checkDigitVerify3  = $this->checkDigitVerify( $expiryRaw, $checkDigit3 );
-
-                $nationality        = $this->getCountry( $this->stripPadding( substr($mrz, 45, 3) ) );
-
-                $optionalData2      = $this->stripPadding( substr($mrz, 48, 11) );
-
-                $finalCheckDigitRaw = $documentNumberRaw . $checkDigit1 . $dobRaw . $checkDigit2 . $expiryRaw . $checkDigit3 . $optionalData2;
-                $checkDigit4        = substr($mrz, 59, 1);
-                $checkDigitVerify4  = $this->checkDigitVerify( $finalCheckDigitRaw, $checkDigit4);
-
-                $names              = $this->getNames( substr($mrz, 60, 30) );
-
-                $id['documentCode']     = substr($mrz, 0, 1);
-                $id['documentType']     = ($documentCode1 == 'I') ? 'ID-1' : 'UNKNOWN';
-                $id['documentType']    .= ($documentCode2 == 'R') ? ' Residence Card' : '';
-                $id['issuerOrg']        = $issuerOrg;
-                $id['names']            = $names;
-                $id['documentNumber']   = $documentNumber;
-                $id['optionalData']     = $optionalData;
-                $id['optionalData2']    = $optionalData2;
-                $id['nationality']      = $nationality;
-                $id['dob']              = $dob;
-                $id['sex']              = $sex;
-                $id['expiry']           = $expiry;
-
-                $id['checkDigit']['documentNumber']['checkDigit1']       = $checkDigit1;
-                $id['checkDigit']['documentNumber']['checkDigitVerify1'] = $checkDigitVerify1;
-
-                $id['checkDigit']['dob']['checkDigit2']       = $checkDigit2;
-                $id['checkDigit']['dob']['checkDigitVerify2'] = $checkDigitVerify2;
-
-                $id['checkDigit']['expiry']['checkDigit3']       = $checkDigit3;
-                $id['checkDigit']['expiry']['checkDigitVerify3'] = $checkDigitVerify3;
-
-                $id['checkDigit']['finalCheck']['checkDigit4']       = $checkDigit4;
-                $id['checkDigit']['finalCheck']['checkDigitVerify4'] = $checkDigitVerify4;
-
-                $id['mrzisvalid'] = $checkDigitVerify1 && $checkDigitVerify2 && $checkDigitVerify3 && $checkDigitVerify4;
-
-            }
+            $id['mrzisvalid'] = $checkDigitVerify1 && $checkDigitVerify2 && $checkDigitVerify3 && $checkDigitVerify4;
 
             return $id;
         }
@@ -768,12 +724,223 @@ class SolidusMRZ {
     #   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   #
 
     /**
-     * Parser of ID-2Visa MRZ strings. The machine readable zone on a visa has
+     * Parser of ID-2 (TD2) Travel Document MRZ strings.
+     * 
+     * Size 2 Machine Readable Travel Documents (TD2)
+     * Specified in Part6 of ICAO Doc 9303
+     * https://www.icao.int/publications/pages/publication.aspx?docnum=9303
+     * 
+     * TD2 MRZ is almost the same as Visa MRV-B, only difference being
+     * that TD2 has a final composite checksum
+     * 
+     * The machine readable zone on a visa has
      * 2 lines, each consisting of 36 characters. Below a reference to the format:
-     *   01 - 01: Document code
-     *   02 - 02: Visa Type
+     *   01 - 02: Document code
      *   03 - 05: Issuing state or organisation
-     *   06 - 35: Names
+     *   06 - 36: Names
+     *   37 - 45: Document Number
+     *   46 - 46: Check digit
+     *   47 - 49: Nationality
+     *   50 - 55: Date of birth
+     *   56 - 56: Check digit
+     *   57 - 57: Sex
+     *   58 - 63: Date of expiry
+     *   64 - 64: Check digit
+     *   65 - 71: Optional data
+     *   72 - 72: Composite check digit
+     */
+
+    private function parseMRZID2($mrz) {
+
+        try {
+
+            $documentCode1     = substr($mrz, 0, 1);
+            $documentCode2     = substr($mrz, 1, 1);
+
+            $issuerOrg          = $this->getCountry( $this->stripPadding( substr($mrz, 2, 3) ) );
+
+            $names              = $this->getNames( substr($mrz, 5, 31) );
+
+            $documentNumberRaw  = substr($mrz, 36, 9);
+            $documentNumber     = $this->stripPadding( $documentNumberRaw );
+            $checkDigit1        = substr($mrz, 45, 1);
+            $checkDigitVerify1  = $this->checkDigitVerify( $documentNumberRaw, $checkDigit1 );
+
+            $nationalityRaw		= substr($mrz, 46, 3);
+            $nationality        = $this->getCountry( $this->stripPadding( $nationalityRaw ) );
+
+            $dobRaw             = substr($mrz, 49, 6);
+            $dob                = $this->getFullDate( $this->stripPadding( $dobRaw), 1 );
+            $checkDigit2        = substr($mrz, 55, 1);
+            $checkDigitVerify2  = $this->checkDigitVerify( $dobRaw, $checkDigit2 );
+
+            $sex                = $this->getSex( $this->stripPadding( substr($mrz, 56, 1) ) );
+
+            $expiryRaw          = substr($mrz, 57, 6);
+            $expiry             = $this->getFullDate( $this->stripPadding( $expiryRaw ), 2 );
+
+            $checkDigit3        = $this->stripPadding( substr($mrz, 63, 1) );
+            $checkDigitVerify3  = $this->checkDigitVerify( $expiryRaw, $checkDigit3 );
+
+            $optionalData       = $this->stripPadding( substr($mrz, 64, 7) );
+
+            $finalCheckDigitRaw = $documentNumberRaw . $checkDigit1 . $dobRaw . $checkDigit2 . $expiryRaw . $checkDigit3 . $optionalData;
+            $checkDigit4        = substr($mrz, 71, 1);
+            $checkDigitVerify4  = $this->checkDigitVerify( $finalCheckDigitRaw, $checkDigit4);
+
+            $id['documentCode']     = substr($mrz, 0, 1);
+            $id['documentType']     = ($documentCode1 == 'I') ? 'ID-2' : 'UNKNOWN';
+            $id['documentType']    .= ($documentCode2 == 'R') ? ' Residence Card' : '';
+            $id['issuerOrg']        = $issuerOrg;
+            $id['names']            = $names;
+
+            $id['documentNumber']   = $documentNumber;
+            $id['checkDigit']['documentNumber']['checkDigit1']       = $checkDigit1;
+            $id['checkDigit']['documentNumber']['checkDigitVerify1'] = $checkDigitVerify1;
+
+            $id['nationality']      = $nationality;
+
+            $id['dob']              = $dob;
+            $id['checkDigit']['passport']['checkDigit2']       = $checkDigit2;
+            $id['checkDigit']['passport']['checkDigitVerify2'] = $checkDigitVerify2;
+
+            $id['sex']              = $sex;
+
+            $id['expiry']           = $expiry;
+            $id['checkDigit']['expiry']['checkDigit3']       = $checkDigit3;
+            $id['checkDigit']['expiry']['checkDigitVerify3'] = $checkDigitVerify3;
+
+            $id['optionalData']     = $optionalData;
+
+            $id['checkDigit']['finalCheck']['checkDigit4']       = $checkDigit4;
+            $id['checkDigit']['finalCheck']['checkDigitVerify4'] = $checkDigitVerify4;
+
+            $id['mrzisvalid'] = $checkDigitVerify1 && $checkDigitVerify2 && $checkDigitVerify3 && $checkDigitVerify4;
+
+            return $id;
+        }
+
+        catch (Exception $e) {
+            $error['error'] = 'Details parsing failed. ' . $e;
+            return $error;
+        }
+
+    }
+
+    #   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   #
+    #   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   #
+
+    /**
+     * Parser for French ID cards.
+     * 
+     * They have 2 rows of 36 characters, which makes them similar to the ID-2 and MRV-B formats,
+     * but the position of the fields is very different
+     * https://www.dcode.fr/french-id-card
+     * 
+     */
+    private function parseMRZFrenchID($mrz) {
+        try {
+            $documentCode1     = substr($mrz, 0, 1);
+            $documentCode2     = substr($mrz, 1, 1);
+
+            $issuerOrg          = $this->getCountry( $this->stripPadding( substr($mrz, 2, 3) ) );
+
+            $documentNumberRaw  = substr($mrz, 36, 12);
+            $documentNumber     = $this->stripPadding( $documentNumberRaw );
+            $checkDigit1        = substr($mrz, 48, 1);
+            $checkDigitVerify1  = $this->checkDigitVerify( $documentNumberRaw, $checkDigit1 );
+
+            $optionalData       = $this->stripPadding( substr($mrz, 30, 6) );
+
+            $dobRaw             = substr($mrz, 63, 6);
+            $dob                = $this->getFullDate( $this->stripPadding( $dobRaw), 1 );
+            $checkDigit2        = substr($mrz, 69, 1);
+            $checkDigitVerify2  = $this->checkDigitVerify( $dobRaw, $checkDigit2 );
+
+            $sex                = $this->getSex( $this->stripPadding( substr($mrz, 70, 1) ) );
+
+            /*
+            // data do not exist
+
+            $expiryRaw          = substr($mrz, 38, 6);
+            $expiry             = $this->getFullDate( $this->stripPadding( $expiryRaw ), 2 );
+            */
+
+            $checkDigit3        = null; //data missing
+            //$checkDigitVerify3  = $this->checkDigitVerify( $expiryRaw, $checkDigit3 );
+            $checkDigitVerify3  = 1; //data missing, set to 1
+
+            $nationality        = $this->getCountry( $this->stripPadding( substr($mrz, 2, 3) ) );
+
+            //$optionalData2      = $this->stripPadding( substr($mrz, 48, 11) );
+
+            $finalCheckDigitRaw = substr($mrz, 0, 71);
+            $checkDigit4        = $this->stripPadding( substr($mrz, 71, 1) );
+            $checkDigitVerify4  = $this->checkDigitVerify( $finalCheckDigitRaw, $checkDigit4);
+
+            $id['documentCode']     = substr($mrz, 0, 1);
+            $id['documentType']     = ($documentCode1 == 'I') ? 'ID-1' : 'UNKNOWN';
+            $id['documentType']    .= ($documentCode2 == 'R') ? ' Residence Card' : '';
+            $id['issuerOrg']        = $issuerOrg;
+            $id['names']['lastName']  = $this->stripPadding( substr($mrz, 5, 25) );
+            $id['names']['firstName']  = $this->stripPadding( substr($mrz, 49, 14) );
+            $id['documentNumber']   = $documentNumber;
+            $id['optionalData']     = $optionalData;
+            //$id['optionalData2']    = $optionalData2;
+            $id['nationality']      = $nationality;
+            $id['dob']              = $dob;
+            $id['sex']              = $sex;
+            //$id['expiry']           = $expiry; // data do not exist
+
+            $id['checkDigit']['documentNumber']['checkDigit1']       = $checkDigit1;
+            $id['checkDigit']['documentNumber']['checkDigitVerify1'] = $checkDigitVerify1;
+
+            $id['checkDigit']['dob']['checkDigit2']       = $checkDigit2;
+            $id['checkDigit']['dob']['checkDigitVerify2'] = $checkDigitVerify2;
+
+            $id['checkDigit']['expiry']['checkDigit3']       = $checkDigit3;
+            $id['checkDigit']['expiry']['checkDigitVerify3'] = $checkDigitVerify3;
+
+            $id['checkDigit']['finalCheck']['checkDigit4']       = $checkDigit4;
+            $id['checkDigit']['finalCheck']['checkDigitVerify4'] = $checkDigitVerify4;
+
+            $id['mrzisvalid'] = $checkDigitVerify1 && $checkDigitVerify2 && $checkDigitVerify3 && $checkDigitVerify4;
+
+            return $id;
+        }
+
+        catch (Exception $e) {
+            $error['error'] = 'Details parsing failed. ' . $e;
+            return $error;
+        }
+    }
+
+    #   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   #
+    #   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   =    =    =    =   #
+
+    /**
+     * Parser of MRV-B Visa MRZ strings.
+     * 
+     * Specified in Part 7 of ICAO Doc 9303
+     * https://www.icao.int/publications/pages/publication.aspx?docnum=9303
+     * 
+     * MRV-B Visa MRZ is almost identical to ID-2, the only difference being
+     * it does not have a final composite check digit
+     * 
+     * The machine readable zone on a visa has
+     * 2 lines, each consisting of 36 characters. Below a reference to the format:
+     *   01 - 02: Document code
+     *   03 - 05: Issuing state or organisation
+     *   06 - 36: Names
+     *   37 - 45: Document Number
+     *   46 - 46: Check digit
+     *   47 - 49: Nationality
+     *   50 - 55: Date of birth
+     *   56 - 56: Check digit
+     *   57 - 57: Sex
+     *   58 - 63: Date of expiry
+     *   64 - 64: Check digit
+     *   65 - 72: Optional data
      *
      */
 
@@ -808,7 +975,7 @@ class SolidusMRZ {
             $checkDigit3        = $this->stripPadding( substr($mrz, 63, 1) );
             $checkDigitVerify3  = $this->checkDigitVerify( $expiryRaw, $checkDigit3 );
 
-            $optionalData       = substr($mrz, 64, 8);
+            $optionalData       = $this->stripPadding( substr($mrz, 64, 8) );
 
             $id['documentCode']     = substr($mrz, 0, 1);
             $id['documentType']     = ($documentCode1 == 'V') ? 'ID-2 Visa' : 'UNKNOWN';
@@ -852,8 +1019,9 @@ class SolidusMRZ {
     public function parseMRZ($mrz) {
 
         $mrz = str_replace(array("\n\r", "\n", "\r"), "", $mrz);
+        $len = strlen($mrz);
 
-        if ($mrz == null || (strlen($mrz) != 88  && strlen($mrz) != 90  && strlen($mrz) != 72) ) {
+        if ($mrz == null || ($len != 88  && $len != 90  && $len != 72) ) {
             $error['error'] = 'Invalid MRZ length for ICAO document.';
             return $error;
         }
@@ -862,17 +1030,31 @@ class SolidusMRZ {
 
         switch ($documentCode) {
 
-            case 'P' : return $this->parseMRZPassport($mrz); break;
+            case 'P' : return $this->parseMRZPassport($mrz);
 
-            case 'I' : return $this->parseMRZID1($mrz); break;
+            case 'A' :
+            case 'C' :
+            case 'I' :
+                if ($len == 90) {
+                    return $this->parseMRZID1($mrz);
+                }
+                else if ($len == 72) {
+                    if (substr($mrz, 2, 3) == 'FRA') {
+                        // special handling for french
+                        return $this->parseMRZFrenchID($mrz);
+                    }
+                    else {
+                        // normal ID-2
+                        return $this->parseMRZID2($mrz);
+                    }
+                }
+                break;
 
-            case 'V' : return $this->parseMRZVisa($mrz); break;
-
-            default  :
-                $error['error'] = 'Unknown document.';
-                return $error;
-
+            case 'V' : return $this->parseMRZVisa($mrz);
         }
+
+        $error['error'] = 'Unknown document.';
+        return $error;
 
     }
 
