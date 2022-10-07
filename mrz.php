@@ -658,7 +658,8 @@ class SolidusMRZ {
             $checkDigit1        = substr($mrz, 14, 1);
             $checkDigitVerify1  = $this->checkDigitVerify( $documentNumberRaw, $checkDigit1 );
 
-            $optionalData       = $this->stripPadding( substr($mrz, 15, 15) );
+            $optionalDataRaw    = substr($mrz, 15, 15);
+            $optionalData       = $this->stripPadding( $optionalDataRaw );
 
             $dobRaw             = substr($mrz, 30, 6);
             $dob                = $this->getFullDate( $this->stripPadding( $dobRaw), 1 );
@@ -675,9 +676,10 @@ class SolidusMRZ {
 
             $nationality        = $this->getCountry( $this->stripPadding( substr($mrz, 45, 3) ) );
 
-            $optionalData2      = $this->stripPadding( substr($mrz, 48, 11) );
+            $optionalData2Raw   = substr($mrz, 48, 11);
+            $optionalData2      = $this->stripPadding( $optionalData2Raw );
 
-            $finalCheckDigitRaw = $documentNumberRaw . $checkDigit1 . $dobRaw . $checkDigit2 . $expiryRaw . $checkDigit3 . $optionalData2;
+            $finalCheckDigitRaw = $documentNumberRaw . $checkDigit1 . $optionalDataRaw . $dobRaw . $checkDigit2 . $expiryRaw . $checkDigit3 . $optionalData2Raw;
             $checkDigit4        = substr($mrz, 59, 1);
             $checkDigitVerify4  = $this->checkDigitVerify( $finalCheckDigitRaw, $checkDigit4);
 
